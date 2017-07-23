@@ -6,7 +6,6 @@
 #include<math.h>
 #include<cstdio>
 #include<cstring>
-#include<omp.h>
 int svrg::init_svrg(char* fea_file, char* label_file, double lambda, double eta, int epoch){
 	freopen(fea_file, "r", stdin);
 	scanf("%d%d", &this->exp_num, &this->fea_num);
@@ -26,7 +25,6 @@ int svrg::init_svrg(char* fea_file, char* label_file, double lambda, double eta,
 	this->lambda = lambda;
 	this->eta = eta;
 	this->epoch = epoch;
-	omp_set_num_threads(OMP_THREADS);
 	return 0;
 }
 int svrg::find_opt(){

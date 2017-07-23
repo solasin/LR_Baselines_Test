@@ -6,7 +6,6 @@
 #include<math.h>
 #include<cstdio>
 #include<cstring>
-#include<omp.h>
 int saga::init_saga(char* fea_file, char* label_file, double lambda, double eta, int epoch){
 	freopen(fea_file, "r", stdin);
 	scanf("%d%d", &this->exp_num, &this->fea_num);
@@ -33,7 +32,6 @@ int saga::init_saga(char* fea_file, char* label_file, double lambda, double eta,
 	memset(wi_set[0], 0, sizeof(double)*this->fea_num*this->exp_num);
 	for (int i = 1; i < this->exp_num; i++)
 		this->wi_set[i] = this->wi_set[0] + i*this->fea_num;
-	omp_set_num_threads(OMP_THREADS);
 	return 0;
 }
 int saga::find_opt(){
@@ -56,12 +54,8 @@ int saga::find_opt(){
 	vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, this->fea_num, this->wi, RAN_MU, RAN_SIGMA);
 
 	//grad set and mu_grad init
-#pragma omp parallel
-	{
-		int th_now = omp_get_thread_num();
-		for (int i = th_now; i < this->exp_num; i += OMP_THREADS)
-			cblas_dcopy(this->fea_num, this->wi, 1, this->wi_set[i], 1);
-	}
+	for (int i = 0; i < this->exp_num; i ++)
+		cblas_dcopy(this->fea_num, this->wi, 1, this->wi_set[i], 1);
 	lr_grad(this->exp_num, this->fea_num, this->wi, this->xi, this->yi, this->lambda, mu_grad);
 
 	//main iteration

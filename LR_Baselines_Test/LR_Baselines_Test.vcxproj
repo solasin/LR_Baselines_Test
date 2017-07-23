@@ -83,6 +83,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="check.cpp" />
+    <ClCompile Include="gd.cpp" />
     <ClCompile Include="grad.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="saga.cpp" />
@@ -92,6 +93,7 @@
   <ItemGroup>
     <ClInclude Include="check.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="gd.h" />
     <ClInclude Include="grad.h" />
     <ClInclude Include="saga.h" />
     <ClInclude Include="sgd.h" />

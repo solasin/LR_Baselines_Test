@@ -3,4 +3,6 @@
 int lr_grad(int exp_num, int fea_num, double* wi, double** xi, double* yi, double lambda, double* delta_wi);
 int lr_sto_grad(int delta_exp, int fea_num, double* wi, double** xi, double* yi, double lambda, double* delta_wi);
 int lr_mini_gra(int batch_len, int* batch, int fea_num, double* wi, double** xi, double* yi, double lambda,double* delta_wi);
+int softmax_grad(int exp_num, int cate,int fea_num,double** wi, double** xi, int* yi, double lambda, double** delta_wi);
+int softmax_sto_grad(int delta_exp, int cate, int fea_num, double** wi, double** xi, int* yi, double lambda, double** delta_wi);
 #endif
