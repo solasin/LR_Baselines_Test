@@ -8,32 +8,41 @@
 #include<cstring>
 int saga::init_saga(char* fea_file, char* label_file, double lambda, double eta, int epoch){
 	freopen(fea_file, "r", stdin);
-	scanf("%d%d", &this->exp_num, &this->fea_num);
-	this->wi = (double*)malloc(sizeof(double)*this->fea_num);
+	scanf("%d%d%d", &this->exp_num, &this->fea_num,&this->cate);
+	this->wi = (double**)malloc(sizeof(double*)*this->cate);
+	this->wi[0] = (double*)malloc(sizeof(double)*this->cate*this->fea_num);
+	for (int i = 1; i < this->cate; i++)
+		this->wi[i] = this->wi[0] + i*this->fea_num;
+
 	this->xi = (double**)malloc(sizeof(double*)*this->exp_num);
 	this->xi[0] = (double*)malloc(sizeof(double)*(this->exp_num*this->fea_num));
 	for (int i = 1; i < this->exp_num; i++)
-		this->xi[i] = this->xi[0] + i*fea_num;
-	this->yi = (double*)malloc(sizeof(double)*this->exp_num);
+		this->xi[i] = this->xi[0] + i*this->fea_num;
+
+	this->yi = (int*)malloc(sizeof(double)*this->exp_num);
 	for (int i = 0; i < this->exp_num; i++)
 	for (int j = 0; j < this->fea_num; j++)
 		scanf("%lf", &this->xi[i][j]);
 	freopen(label_file, "r", stdin);
 	for (int i = 0; i < this->exp_num; i++)
-		scanf("%lf", &this->yi[i]);
+		scanf("%d", &this->yi[i]);
 
 	this->lambda = lambda;
 	this->eta = eta;
 	this->iter_num = iter_num;
 
 	//grad set init
-	this->wi_set = (double**)malloc(sizeof(double*)*this->exp_num);
-	this->wi_set[0] = (double*)malloc(sizeof(double)*this->fea_num*this->exp_num);
-	memset(wi_set[0], 0, sizeof(double)*this->fea_num*this->exp_num);
-	for (int i = 1; i < this->exp_num; i++)
-		this->wi_set[i] = this->wi_set[0] + i*this->fea_num;
+	this->wi_set = (double***)malloc(sizeof(double**)*this->exp_num);
+	for (int i = 0; i < this->exp_num; i++) {
+		this->wi_set[i] = (double**)malloc(sizeof(double*)*this->cate);
+		this->wi_set[i][0] = (double*)malloc(sizeof(double)*this->cate*this->fea_num);
+		for (int j = 1; j < this->cate; j++)
+			this->wi_set[i][j] = this->wi_set[i][0] + j*this->fea_num;
+		memset(this->wi_set[i][0], 0, sizeof(double)*this->cate*this->fea_num);
+	}
 	return 0;
 }
+/*
 int saga::find_opt(){
 	//grad init
 	double* mu_grad; // average grad
@@ -84,3 +93,4 @@ int saga::find_opt(){
 	free(mu_grad);
 	return 0;
 }
+*/

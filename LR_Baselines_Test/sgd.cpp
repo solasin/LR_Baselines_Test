@@ -17,7 +17,7 @@ int sgd::init_sgd(char* fea_file, char* label_file, double lambda, double eta, b
 	this->xi = (double**)malloc(sizeof(double*)*this->exp_num);
 	this->xi[0] = (double*)malloc(sizeof(double)*(this->exp_num*this->fea_num));
 	for (int i = 1; i < this->exp_num; i++)
-		this->xi[i] = this->xi[0] + i*fea_num;
+		this->xi[i] = this->xi[0] + i*this->fea_num;
 	this->yi = (int*)malloc(sizeof(int)*this->exp_num);
 	for (int i = 0; i < this->exp_num; i++)
 	for (int j = 0; j < this->fea_num; j++)

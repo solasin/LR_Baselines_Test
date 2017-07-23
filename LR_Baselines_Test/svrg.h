@@ -2,10 +2,10 @@
 #define SVRG_H
 struct svrg{
 	// input para
-	int exp_num, fea_num;
-	double* wi;
+	int exp_num, fea_num, cate;
+	double** wi;
 	double** xi;
-	double* yi;
+	int* yi;
 
 	// model para
 	double lambda;
