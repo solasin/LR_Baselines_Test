@@ -1,12 +1,10 @@
 #include"config.h"
-#include<omp.h>
 #include<cstring>
 #include<mkl.h>
 #include<math.h>
 #include<cstdio>
 int lr_grad(int exp_num, int fea_num, double* wi, double** xi, double* yi, double lambda, double* delta_wi){
 	memset(delta_wi, 0, sizeof(double)*fea_num);
-	int th_now = omp_get_thread_num();
 	for (int i = 0; i < exp_num; i++){
 		double z_now = cblas_ddot(fea_num, wi, 1, xi[i], 1);
 		double g_now = 1.0 / (1.0 + exp(yi[i] * z_now));
@@ -26,7 +24,6 @@ int lr_sto_grad(int delta_exp, int fea_num, double* wi, double** xi, double* yi,
 }
 int lr_mini_gra(int batch_len, int* batch, int fea_num, double* wi, double** xi, double* yi, double lambda, double* delta_wi){
 	memset(delta_wi, 0, sizeof(double)*fea_num);
-	int th_now = omp_get_thread_num();
 	for (int i = 0; i < batch_len; i++){
 		int exp_id = batch[i];
 		double z_now = cblas_ddot(fea_num, wi, 1, xi[exp_id], 1);
@@ -38,7 +35,6 @@ int lr_mini_gra(int batch_len, int* batch, int fea_num, double* wi, double** xi,
 	return 0;
 }
 int softmax_grad(int exp_num, int cate, int fea_num, double** wi, double** xi, int* yi, double lambda, double** delta_wi) {
-	memset(delta_wi[0], 0, sizeof(double)*cate*fea_num);
 	for (int k = 0; k < cate; k++) {
 		memset(delta_wi[k], 0, sizeof(double)*fea_num);
 		for (int i = 0; i < exp_num; i++) {

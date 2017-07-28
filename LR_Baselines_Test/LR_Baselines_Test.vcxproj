@@ -85,7 +85,9 @@
     <ClCompile Include="check.cpp" />
     <ClCompile Include="gd.cpp" />
     <ClCompile Include="grad.cpp" />
+    <ClCompile Include="hessi.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="newton.cpp" />
     <ClCompile Include="saga.cpp" />
     <ClCompile Include="sgd.cpp" />
     <ClCompile Include="svrg.cpp" />
@@ -95,6 +97,8 @@
     <ClInclude Include="config.h" />
     <ClInclude Include="gd.h" />
     <ClInclude Include="grad.h" />
+    <ClInclude Include="hessi.h" />
+    <ClInclude Include="newton.h" />
     <ClInclude Include="saga.h" />
     <ClInclude Include="sgd.h" />
     <ClInclude Include="svrg.h" />

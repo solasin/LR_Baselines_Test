@@ -36,6 +36,12 @@
     <ClCompile Include="gd.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="newton.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="hessi.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="grad.h">
@@ -57,6 +63,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="gd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="newton.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="hessi.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

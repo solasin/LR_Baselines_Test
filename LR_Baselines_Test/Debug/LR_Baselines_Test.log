@@ -1,1 +1,8 @@
-﻿  main.cpp
+﻿  check.cpp
+  gd.cpp
+  grad.cpp
+  hessi.cpp
+  newton.cpp
+  saga.cpp
+  sgd.cpp
+  svrg.cpp
