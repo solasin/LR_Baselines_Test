@@ -35,28 +35,31 @@ int lr_mini_gra(int batch_len, int* batch, int fea_num, double* wi, double** xi,
 	return 0;
 }
 int softmax_grad(int exp_num, int cate, int fea_num, double** wi, double** xi, int* yi, double lambda, double** delta_wi) {
-	for (int k = 0; k < cate; k++) {
-		memset(delta_wi[k], 0, sizeof(double)*fea_num);
-		for (int i = 0; i < exp_num; i++) {
+	cblas_dcopy(cate*fea_num, wi[0], 1, delta_wi[0], 1);
+	cblas_dscal(cate*fea_num, lambda, delta_wi[0], 1);
+	for (int i = 0; i < exp_num; i++) {
+		double tmp_den = 0;
+		for (int k = 0; k < cate; k++)
+			tmp_den += exp(cblas_ddot(fea_num, wi[k], 1, xi[i], 1));
+		for (int k = 0; k < cate; k++) {
 			double tmp_cof = 0;
-			for (int j = 0; j < cate; j++) 
-				tmp_cof += exp(cblas_ddot(fea_num, wi[j], 1, xi[i], 1));
-			tmp_cof = exp(cblas_ddot(fea_num, wi[k], 1, xi[i], 1)) / tmp_cof;
+			tmp_cof = exp(cblas_ddot(fea_num, wi[k], 1, xi[i], 1)) / tmp_den;
 			if (yi[i] == k)
 				tmp_cof -= 1;
-			cblas_daxpy(fea_num, tmp_cof / double(1.0*exp_num), xi[i], 1, delta_wi[k], 1);
+			cblas_daxpy(fea_num, tmp_cof/double(1.0*exp_num), xi[i], 1, delta_wi[k], 1);
 		}
-		cblas_daxpy(fea_num, lambda, wi[k], 1, delta_wi[k], 1);
 	}
+
 	return 0;
 }
 int softmax_sto_grad(int delta_exp, int cate, int fea_num, double** wi, double** xi, int* yi, double lambda, double** delta_wi) {
+	double tmp_den = 0;
+	for (int k = 0; k < cate; k++)
+		tmp_den += exp(cblas_ddot(fea_num, wi[k], 1, xi[delta_exp], 1));
 	for (int k = 0; k < cate; k++) {
 		memset(delta_wi[k], 0, sizeof(double)*fea_num);
 		double tmp_cof = 0;
-		for (int j = 0; j < cate; j++)
-			tmp_cof += exp(cblas_ddot(fea_num, wi[j], 1, xi[delta_exp], 1));
-		tmp_cof = exp(cblas_ddot(fea_num, wi[k], 1, xi[delta_exp], 1)) / tmp_cof;
+		tmp_cof = exp(cblas_ddot(fea_num, wi[k], 1, xi[delta_exp], 1)) / tmp_den;
 		if (yi[delta_exp] == k)
 			tmp_cof -= 1;
 		cblas_daxpy(fea_num, tmp_cof, xi[delta_exp], 1, delta_wi[k] , 1);
