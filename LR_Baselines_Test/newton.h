@@ -13,6 +13,6 @@ struct newton {
 
 	int init_newton(char* fea_file, char* label_file, double lambda, int iter_num);
 	int find_opt();
-	bool check_hessian(double** delta_wi);
+	bool check_hessian();
 };
 #endif // !NEWTON_H
