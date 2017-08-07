@@ -63,12 +63,10 @@ int newton::init_newton(svrg* opt_pre, int iter_num) {
 
 int newton::find_opt(bool pre_opted) {
 	VSLStreamStatePtr stream;
-	double* gd_tmp;
 	double** gd_grad;
 	double** var_hessi;
-	double** inv_hessi;
+	//double** inv_hessi;
 	int* ipv_hessi;
-	gd_tmp = (double*)malloc(sizeof(double)*this->fea_num);
 
 	gd_grad = (double**)malloc(sizeof(double*)*this->cate);
 	gd_grad[0] = (double*)malloc(sizeof(double)*this->cate*this->fea_num);
@@ -80,11 +78,11 @@ int newton::find_opt(bool pre_opted) {
 	for (int i = 1; i < this->cate*this->fea_num; i++)
 		var_hessi[i] = var_hessi[0] + i*this->fea_num*this->cate;
 
-	inv_hessi = (double**)malloc(sizeof(double*)*this->cate*this->fea_num);
+	/*inv_hessi = (double**)malloc(sizeof(double*)*this->cate*this->fea_num);
 	inv_hessi[0] = (double*)malloc(sizeof(double)*this->cate*this->cate*this->fea_num*this->fea_num);
 	for (int i = 1; i < this->cate*this->fea_num; i++)
 		inv_hessi[i] = inv_hessi[0] + i*this->fea_num*this->cate;
-		
+	*/	
 
 	ipv_hessi = (int*)malloc(sizeof(int)*this->fea_num*this->cate);
 
@@ -100,17 +98,10 @@ int newton::find_opt(bool pre_opted) {
 		softmax_grad(this->exp_num, this->cate, this->fea_num, this->wi,this->xi, this->yi, this->lambda, gd_grad);
 		softmax_hessi(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda, var_hessi);
 		//check_hessian(var_hessi,1000);
-		cblas_dcopy(this->cate*this->fea_num*this->cate*this->fea_num, var_hessi[0], 1, inv_hessi[0], 1);
-		int info = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, this->cate*this->fea_num, this->cate*this->fea_num, inv_hessi[0], this->cate*this->fea_num, ipv_hessi);
-		info = LAPACKE_dgetri(LAPACK_ROW_MAJOR, this->cate*this->fea_num, inv_hessi[0], this->cate*this->fea_num, ipv_hessi);
-		//check_inversion(var_hessi, inv_hessi, 1000);
-		for (int i = 0; i < this->cate*this->fea_num; i++) {
-			double tmp = 0;
-			for (int j = 0; j < this->cate*this->fea_num; j++)
-				tmp += var_hessi[i][j] * inv_hessi[j][0];
-			printf("%d %d ~~~~~~~ %lf\,", i, 0, tmp);
-		}
-		//debug end
+		//cblas_dcopy(this->cate*this->fea_num*this->cate*this->fea_num, var_hessi[0], 1, inv_hessi[0], 1);
+		int info = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, this->cate*this->fea_num, this->cate*this->fea_num, var_hessi[0], this->cate*this->fea_num, ipv_hessi);
+		info = LAPACKE_dgetri(LAPACK_ROW_MAJOR, this->cate*this->fea_num, var_hessi[0], this->cate*this->fea_num, ipv_hessi);
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, this->cate*this->fea_num, 1, this->cate*this->fea_num, -1.0, var_hessi[0], this->cate*this->fea_num, gd_grad[0], 1, 1.0, this->wi[0], 1);
 
 		/*for (int k = 0; k < this->cate; k++) {
 			softmax_hessi(k, this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda, var_hessi);
@@ -124,13 +115,10 @@ int newton::find_opt(bool pre_opted) {
 			cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, this->fea_num, 1, this->fea_num,1.0, var_hessi[0], this->fea_num, gd_grad[k], 1, 0, gd_tmp, 1);
 			cblas_dcopy(this->fea_num, gd_tmp, 1, gd_grad[k], 1);
 		}*/
-		cblas_daxpy(this->cate*this->fea_num, -1.0, gd_grad[0], 1, this->wi[0], 1);
+		//cblas_daxpy(this->cate*this->fea_num, -1.0, gd_grad[0], 1, this->wi[0], 1);
 	}
 	vslDeleteStream(&stream);
-	free(gd_tmp);
 	free(ipv_hessi);
-	free(inv_hessi[0]);
-	free(inv_hessi);
 	free(var_hessi[0]);
 	free(var_hessi);
 	free(gd_grad[0]);

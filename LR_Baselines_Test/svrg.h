@@ -14,5 +14,6 @@ struct svrg{
 
 	int init_svrg(char* fea_file, char* label_file, double lambda, double eta, int epoch);
 	int find_opt();
+	int relese_svrg();
 };
 #endif

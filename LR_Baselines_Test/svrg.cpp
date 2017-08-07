@@ -88,3 +88,11 @@ int svrg::find_opt(){
 	free(mu_grad);
 	return 0;
 }
+int svrg::relese_svrg() {
+	free(this->wi[0]);
+	free(this->wi);
+	free(this->xi[0]);
+	free(this->xi);
+	free(this->yi);
+	return 0;
+}
