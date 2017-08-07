@@ -8,4 +8,5 @@
 #define RAN_SIGMA 0.01
 
 #define CHECK_EPS 1e-6
+#define OPT_LOSS 0.267217680662898
 #endif

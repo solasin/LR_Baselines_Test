@@ -3,9 +3,12 @@
 #include"grad.h"
 #include"hessi.h"
 #include"check.h"
+#include"svrg.h"
 #include<mkl.h>
 #include<cstring>
 #include<cstdio>
+#include<cmath>
+
 int newton::init_newton(char* fea_file, char* label_file, double lambda, int iter_num) {
 	freopen(fea_file, "r", stdin);
 	scanf("%d%d%d", &this->exp_num, &this->fea_num, &this->cate);
@@ -33,7 +36,32 @@ int newton::init_newton(char* fea_file, char* label_file, double lambda, int ite
 	return 0;
 }
 
-int newton::find_opt() {
+int newton::init_newton(svrg* opt_pre, int iter_num) {
+	this->exp_num = opt_pre->exp_num;
+	this->fea_num = opt_pre->fea_num;
+	this->cate = opt_pre->cate;
+	this->wi = (double**)malloc(sizeof(double*)*this->cate);
+	this->wi[0] = (double*)malloc(sizeof(double)*this->cate*this->fea_num);
+	for (int i = 1; i < this->cate; i++)
+		this->wi[i] = this->wi[0] + i*this->fea_num;
+	cblas_dcopy(this->cate*this->fea_num,opt_pre->wi[0], 1,this->wi[0],1);
+
+	this->xi = (double**)malloc(sizeof(double*)*this->exp_num);
+	this->xi[0] = (double*)malloc(sizeof(double)*(this->exp_num*this->fea_num));
+	for (int i = 1; i < this->exp_num; i++)
+		this->xi[i] = this->xi[0] + i*this->fea_num;
+	cblas_dcopy(this->fea_num*this->exp_num, opt_pre->xi[0], 1, this->xi[0], 1);
+
+	this->yi = (int*)malloc(sizeof(int)*this->exp_num);
+	memcpy(this->yi, opt_pre->yi, sizeof(int)*this->exp_num);
+
+	this->lambda = opt_pre->lambda;
+	this->iter_num = iter_num;
+
+	return 0;
+}
+
+int newton::find_opt(bool pre_opted) {
 	VSLStreamStatePtr stream;
 	double* gd_tmp;
 	double** gd_grad;
@@ -47,42 +75,59 @@ int newton::find_opt() {
 	for (int i = 1; i < this->cate; i++)
 		gd_grad[i] = gd_grad[0] + i*this->fea_num;
 
-	var_hessi = (double**)malloc(sizeof(double*)*this->fea_num);
-	var_hessi[0] = (double*)malloc(sizeof(double)*this->fea_num*this->fea_num);
-	for (int i = 1; i < this->fea_num; i++)
-		var_hessi[i] = var_hessi[0] + i*this->fea_num;
+	var_hessi = (double**)malloc(sizeof(double*)*this->cate*this->fea_num);
+	var_hessi[0] = (double*)malloc(sizeof(double)*this->cate*this->cate*this->fea_num*this->fea_num);
+	for (int i = 1; i < this->cate*this->fea_num; i++)
+		var_hessi[i] = var_hessi[0] + i*this->fea_num*this->cate;
 
-	inv_hessi = (double**)malloc(sizeof(double*)*this->fea_num);
-	inv_hessi[0] = (double*)malloc(sizeof(double)*this->fea_num*this->fea_num);
-	for (int i = 1; i < this->fea_num; i++)
-		inv_hessi[i] = inv_hessi[0] + i*this->fea_num;
+	inv_hessi = (double**)malloc(sizeof(double*)*this->cate*this->fea_num);
+	inv_hessi[0] = (double*)malloc(sizeof(double)*this->cate*this->cate*this->fea_num*this->fea_num);
+	for (int i = 1; i < this->cate*this->fea_num; i++)
+		inv_hessi[i] = inv_hessi[0] + i*this->fea_num*this->cate;
 		
 
-	ipv_hessi = (int*)malloc(sizeof(int)*this->fea_num);
+	ipv_hessi = (int*)malloc(sizeof(int)*this->fea_num*this->cate);
 
 	// initialize opt_var
-	vslNewStream(&stream, VSL_BRNG_MCG31, RAN_SEED);
-	vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, this->cate*this->fea_num, this->wi[0], RAN_MU, RAN_SIGMA);
-	//check_hessian();
+	if (pre_opted == false) {
+		vslNewStream(&stream, VSL_BRNG_MCG31, RAN_SEED);
+		vdRngGaussian(VSL_RNG_METHOD_GAUSSIAN_ICDF, stream, this->cate*this->fea_num, this->wi[0], RAN_MU, RAN_SIGMA);
+	}
 	for (int t = 0; t < this->iter_num; t++) {
 		double loss_now = 0;
 		loss_now = softmax_loss(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda);
-		printf("EPOCH %d\nLOSS %.8lf\n--------------------------------------------------\n", t, loss_now);
+		printf("EPOCH %d\nLOSS %.8lf %.8lf\n--------------------------------------------------\n", t, loss_now, log(loss_now-OPT_LOSS));
 		softmax_grad(this->exp_num, this->cate, this->fea_num, this->wi,this->xi, this->yi, this->lambda, gd_grad);
-		for (int k = 0; k < this->cate; k++) {
+		softmax_hessi(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda, var_hessi);
+		//check_hessian(var_hessi,1000);
+		cblas_dcopy(this->cate*this->fea_num*this->cate*this->fea_num, var_hessi[0], 1, inv_hessi[0], 1);
+		int info = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, this->cate*this->fea_num, this->cate*this->fea_num, inv_hessi[0], this->cate*this->fea_num, ipv_hessi);
+		info = LAPACKE_dgetri(LAPACK_ROW_MAJOR, this->cate*this->fea_num, inv_hessi[0], this->cate*this->fea_num, ipv_hessi);
+		//check_inversion(var_hessi, inv_hessi, 1000);
+		for (int i = 0; i < this->cate*this->fea_num; i++) {
+			double tmp = 0;
+			for (int j = 0; j < this->cate*this->fea_num; j++)
+				tmp += var_hessi[i][j] * inv_hessi[j][0];
+			printf("%d %d ~~~~~~~ %lf\,", i, 0, tmp);
+		}
+		//debug end
+
+		/*for (int k = 0; k < this->cate; k++) {
 			softmax_hessi(k, this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda, var_hessi);
-			memset(inv_hessi[0], 0, sizeof(double)*this->fea_num*this->fea_num);
-			for (int j = 0; j < this->fea_num; j++)
-				inv_hessi[j][j] = 1.0;
-			LAPACKE_dgesv(LAPACK_ROW_MAJOR,this->fea_num,this->fea_num,var_hessi[0],this->fea_num,ipv_hessi,inv_hessi[0],this->fea_num);
+			cblas_dcopy(this->fea_num*this->fea_num, var_hessi[0], 1, inv_hessi[0], 1);
+			//LAPACKE_dgesv(LAPACK_ROW_MAJOR,this->fea_num,this->fea_num,var_hessi[0],this->fea_num,ipv_hessi,inv_hessi[0],this->fea_num);
+			int info = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, this->fea_num, this->fea_num, var_hessi[0], this->fea_num, ipv_hessi);
+			info=LAPACKE_dgetri(LAPACK_ROW_MAJOR,this->fea_num,var_hessi[0],this->fea_num,ipv_hessi);
+
 			//cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, fea_num, fea_num, 1, tmp_now, xi[i], 1, xi[i], fea_num, 1.0, delta_hessi[0], fea_num);
 			//cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,);
-			cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, this->fea_num, 1, this->fea_num, 1.0, inv_hessi[0], this->fea_num, gd_grad[k], 1, 0.0, gd_tmp, 1);
+			cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, this->fea_num, 1, this->fea_num,1.0, var_hessi[0], this->fea_num, gd_grad[k], 1, 0, gd_tmp, 1);
 			cblas_dcopy(this->fea_num, gd_tmp, 1, gd_grad[k], 1);
-		}
+		}*/
 		cblas_daxpy(this->cate*this->fea_num, -1.0, gd_grad[0], 1, this->wi[0], 1);
 	}
 	vslDeleteStream(&stream);
+	free(gd_tmp);
 	free(ipv_hessi);
 	free(inv_hessi[0]);
 	free(inv_hessi);
@@ -92,38 +137,50 @@ int newton::find_opt() {
 	free(gd_grad);
 	return 0;
 }
-bool newton::check_hessian() {
-	int flag = true;
-	double** check_hessi;
-	check_hessi = (double**)malloc(sizeof(double*)*this->fea_num);
-	check_hessi[0] = (double*)malloc(sizeof(double)*this->fea_num*this->fea_num);
-	for (int i = 1; i < this->fea_num; i++)
-		check_hessi[i] = check_hessi[0] + i*this->fea_num;
-	for (int i = 0; i < this->cate; i++) {
-		softmax_hessi(i, this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda, check_hessi);
-		
-		// xi = 180, xj = 180 check_hessi[xi][xj]!=0
-		for (int xi = 180; xi < this->fea_num; xi++)
-			for (int xj = 180; xj < this->fea_num; xj++) {
-				double fo_delta, la_delta;
-				this->wi[i][xi] += INIT_EPS;
-				this->wi[i][xj] += INIT_EPS;
+int newton::check_hessian(double** now_hessi, int sam_num) {
+	VSLStreamStatePtr stream;
+	vslNewStream(&stream, VSL_BRNG_MT19937, RAN_SEED);
+	for (int t = 0; t < sam_num; t++) {
+		int cate_i,cate_j,fea_i,fea_j;
+		viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 1, &fea_j, 0, this->fea_num);
+		viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 1, &cate_j, 0, this->cate);
+		viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 1, &fea_i, 0, this->fea_num);
+		viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 1, &cate_i, 0, this->cate);
+		double fo_delta, la_delta;
+				this->wi[cate_i][fea_i] += INIT_EPS;
+				this->wi[cate_j][fea_j] += INIT_EPS;
 				fo_delta = softmax_loss(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda);
-				this->wi[i][xj] -= INIT_EPS;
+				this->wi[cate_j][fea_j] -= INIT_EPS;
 				fo_delta = fo_delta - softmax_loss(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda);
 				fo_delta /= INIT_EPS;
 
-				this->wi[i][xi] -= INIT_EPS;
-				this->wi[i][xj] += INIT_EPS;
+				this->wi[cate_i][fea_i] -= INIT_EPS;
+				this->wi[cate_j][fea_j] += INIT_EPS;
 				la_delta = softmax_loss(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda);
-				this->wi[i][xj] -= INIT_EPS;
+				this->wi[cate_j][fea_j] -= INIT_EPS;
 				la_delta = la_delta - softmax_loss(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda);
 				la_delta /= INIT_EPS;
-				printf("%d %d %d ----------------: %.15lf    %.15lf\n", i, xi, xj, (fo_delta - la_delta) / INIT_EPS, check_hessi[xi][xj]);
-			}
+				printf("%d %d, %d %d ----------------: %.15lf    %.15lf\n", cate_i, fea_i, cate_j, fea_j, (fo_delta - la_delta) / INIT_EPS, now_hessi[cate_i*this->fea_num+fea_i][cate_j*this->fea_num+fea_j]);
+			
+		
 	}
+	vslDeleteStream(&stream);
+	return 0;
+}
 
-	free(check_hessi[0]);
-	free(check_hessi);
-	return (flag);
+int newton::check_inversion(double** ori_mtx, double** inv_mtx, int sam_num) {
+	VSLStreamStatePtr stream;
+	vslNewStream(&stream, VSL_BRNG_MT19937, RAN_SEED);
+	for (int t = 0; t < sam_num; t++) {
+		int now_i, now_j;
+		viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 1, &now_i, 0, this->cate*this->fea_num);
+		if (t % 5 == 0)
+			now_j = now_i;
+		else
+			viRngUniform(VSL_RNG_METHOD_UNIFORM_STD, stream, 1, &now_j, 0, this->cate*this->fea_num);
+		double outp_now = cblas_ddot(this->cate*this->fea_num, ori_mtx[now_i], 1, &inv_mtx[0][now_j], this->fea_num*this->cate);
+		printf("%d %d ----------------- %.15lf\n", now_i, now_j, outp_now);
+	}
+	vslDeleteStream(&stream);
+	return 0;
 }

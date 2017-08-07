@@ -1,1 +1,5 @@
 ﻿  newton.cpp
+newton.cpp(111): warning #192: unrecognized character escape sequence
+    			printf("%d %d ~~~~~~~ %lf\,", i, 0, tmp);
+    			                         ^
+  
