@@ -51,7 +51,7 @@ int softmax_hessi(int exp_num, int cate, int fea_num, double** wi, double** xi, 
 			cblas_dscal(fea_num*fea_num, 0, tmp_hessi[0], 1);
 			if (p == q) {
 				for (int i = 0; i < fea_num; i++)
-					tmp_hessi[p][p] = lambda;
+					tmp_hessi[i][i] = lambda;
 				for (int i = 0; i < exp_num; i++)
 					cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, fea_num, fea_num, 1, tmp_now[p][i] * (1 - tmp_now[p][i]) / double(exp_num), xi[i], 1, xi[i], fea_num, 1.0, tmp_hessi[0], fea_num);			
 			}

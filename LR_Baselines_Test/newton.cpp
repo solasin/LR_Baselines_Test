@@ -82,7 +82,7 @@ int newton::find_opt(bool pre_opted) {
 	inv_hessi[0] = (double*)malloc(sizeof(double)*this->cate*this->cate*this->fea_num*this->fea_num);
 	for (int i = 1; i < this->cate*this->fea_num; i++)
 		inv_hessi[i] = inv_hessi[0] + i*this->fea_num*this->cate;
-	*/	
+	*/
 
 	ipv_hessi = (int*)malloc(sizeof(int)*this->fea_num*this->cate);
 
@@ -98,11 +98,13 @@ int newton::find_opt(bool pre_opted) {
 		softmax_grad(this->exp_num, this->cate, this->fea_num, this->wi,this->xi, this->yi, this->lambda, gd_grad);
 		softmax_hessi(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda, var_hessi);
 		//check_hessian(var_hessi,1000);
-		//cblas_dcopy(this->cate*this->fea_num*this->cate*this->fea_num, var_hessi[0], 1, inv_hessi[0], 1);
-		int info = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, this->cate*this->fea_num, this->cate*this->fea_num, var_hessi[0], this->cate*this->fea_num, ipv_hessi);
-		info = LAPACKE_dgetri(LAPACK_ROW_MAJOR, this->cate*this->fea_num, var_hessi[0], this->cate*this->fea_num, ipv_hessi);
-		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, this->cate*this->fea_num, 1, this->cate*this->fea_num, -1.0, var_hessi[0], this->cate*this->fea_num, gd_grad[0], 1, 1.0, this->wi[0], 1);
-
+        //cblas_dcopy(this->cate*this->fea_num*this->cate*this->fea_num, var_hessi[0], 1, inv_hessi[0], 1);
+        int info = LAPACKE_dgetrf(LAPACK_ROW_MAJOR, this->cate*this->fea_num, this->cate*this->fea_num, var_hessi[0], this->cate*this->fea_num, ipv_hessi);
+		printf("---------------- info = %d\n",info);
+        info = LAPACKE_dgetri(LAPACK_ROW_MAJOR, this->cate*this->fea_num, var_hessi[0], this->cate*this->fea_num, ipv_hessi);
+        printf("---------------- info = %d\n",info);		
+        //check_inversion(inv_hessi,var_hessi,1000);
+        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, this->cate*this->fea_num, 1, this->cate*this->fea_num, -1.0, var_hessi[0], this->cate*this->fea_num, gd_grad[0], 1, 1.0, this->wi[0], 1);
 		/*for (int k = 0; k < this->cate; k++) {
 			softmax_hessi(k, this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda, var_hessi);
 			cblas_dcopy(this->fea_num*this->fea_num, var_hessi[0], 1, inv_hessi[0], 1);
