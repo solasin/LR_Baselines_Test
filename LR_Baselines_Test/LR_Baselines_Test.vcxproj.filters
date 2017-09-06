@@ -42,6 +42,9 @@
     <ClCompile Include="hessi.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="quasi_newton.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="grad.h">
@@ -69,6 +72,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="hessi.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="quasi_newton.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
