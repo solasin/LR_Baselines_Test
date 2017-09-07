@@ -18,7 +18,7 @@ struct quasi_newton {
 	int init_quasi_newton(char* fea_file, char* label_file, double lambda, int iter_num);
 	int init_quasi_newton(svrg* opt_pre, int iter_num);
 	int find_opt(bool pre_opted);
-	double bin_search(double init_step, double** newton_step);
+	double backtracking_armijo(double init_step, double** newton_step, double** g_grad);
 };
 
 

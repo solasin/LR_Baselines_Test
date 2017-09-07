@@ -62,35 +62,25 @@ int quasi_newton::init_quasi_newton(svrg* opt_pre, int iter_num) {
 }
 
 //the newton_step here is equal to -H*detf
-double quasi_newton::bin_search(double init_step, double** newton_step) {
+double quasi_newton::backtracking_armijo(double init_step, double** newton_step, double** g_grad) {
 	double det_step = init_step;
-	double sum_step = 0;
-	double** now_wi;
-	double pre_val;
-	double nex_val;
-
-	pre_val = softmax_loss(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda);
-
-	now_wi = (double**)malloc(sizeof(double*)*this->cate);
-	now_wi[0] = (double*)malloc(sizeof(double)*this->cate*this->fea_num);
+	double** tmp_var;
+	tmp_var = (double**)malloc(sizeof(double*)*this->cate);
+	tmp_var[0] = (double*)malloc(sizeof(double)*this->cate*this->fea_num);
 	for (int i = 1; i < this->cate; i++)
-		now_wi[i] = now_wi[0] + i*this->fea_num;
-	cblas_dcopy(this->cate*this->fea_num, this->wi[0], 1, now_wi[0], 1);
-
-
-	while (det_step>QUASI_EPS) {
-		cblas_daxpy(this->cate*this->fea_num, 1.0*det_step, newton_step[0], 1, now_wi[0], 1);
-		nex_val = softmax_loss(this->exp_num, this->cate, this->fea_num, now_wi, this->xi, this->yi, this->lambda);
-		if (nex_val - pre_val < 0) {
-			pre_val = nex_val;
-			sum_step += det_step;
-		}
-		else {
-			cblas_daxpy(this->cate*this->fea_num, -1.0*det_step, newton_step[0], 1, now_wi[0], 1);
-			det_step /= 2.0;
-		}
+		tmp_var[i] = tmp_var[0] + i*this->fea_num;
+	cblas_dcopy(this->cate*this->fea_num, this->wi[0], 1, tmp_var[0], 1);
+	double inequ_fk = softmax_loss(this->exp_num, this->cate, this->exp_num, this->wi, this->xi, this->yi, this->lambda);
+	while (1) {
+		cblas_daxpy(this->cate*this->fea_num, 1.0*det_step, newton_step[0], 1, tmp_var[0], 1);
+		double inequ_left = softmax_loss(this->exp_num, this->cate, this->fea_num, tmp_var, this->xi, this->yi, this->lambda);
+		if (inequ_left <= inequ_fk + det_step*ARMIJOR_EPS*cblas_ddot(this->cate*this->fea_num, g_grad[0], 1, newton_step[0], 1))
+			break;
+		det_step = det_step / 2.0;
+		if (det_step < QUASI_EPS)
+			break;
 	}
-	return (sum_step);
+	return det_step;
 }
 
 int quasi_newton::find_opt(bool pre_opted) {
@@ -151,7 +141,7 @@ int quasi_newton::find_opt(bool pre_opted) {
 		printf("EPOCH %d\nLOSS %.8lf %.8lf\n--------------------------------------------------\n", t, loss_now, log(loss_now - OPT_LOSS));
 		softmax_grad(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda, gd_grad);
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, this->cate*this->fea_num, 1, this->cate*this->fea_num, -1.0, inv_hessi[0], this->cate*this->fea_num, gd_grad[0], 1, 0.0, newton_step[0], 1);
-		double dec_step = bin_search(1.0, newton_step);
+		double dec_step = backtracking_armijo(1.0, newton_step,gd_grad);
 
 		cblas_dscal(this->cate*this->fea_num, 0.0, det_variable[0], 1);
 		cblas_daxpy(this->cate*this->fea_num, dec_step, newton_step[0], 1, det_variable[0], 1);
@@ -163,6 +153,8 @@ int quasi_newton::find_opt(bool pre_opted) {
 		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, this->cate*this->fea_num, 1, this->cate*this->fea_num, 1.0, inv_hessi[0], this->cate*this->fea_num, det_grad[0], 1, 0.0, gd_grad[0], 1);
 		double cof_hessi = cblas_ddot(this->cate*this->fea_num, det_variable[0], 1, det_grad[0], 1);
 		cof_hessi = (cof_hessi + cblas_ddot(this->cate*this->fea_num, det_grad[0], 1, gd_grad[0], 1)) / (cof_hessi*cof_hessi);
+
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, this->cate*this->fea_num, this->cate*this->fea_num, 1, cof_hessi, det_variable[0], 1, det_variable[0], 1, 0, det_hessi[0], this->cate*this->fea_num);
 
 
 

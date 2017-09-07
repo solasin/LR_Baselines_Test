@@ -10,5 +10,6 @@
 #define CHECK_EPS 1e-6
 #define OPT_LOSS 0.267217680662898
 
-#define QUASI_EPS 1e-7
+#define QUASI_EPS 1e-10
+#define ARMIJOR_EPS 1e-4
 #endif
