@@ -3,7 +3,7 @@
 #include"sgd.h"
 #include"saga.h"
 #include"svrg.h"
-#include"gd.h";
+#include"gd.h"
 struct newton {
 	//input para
 	int exp_num, fea_num, cate;

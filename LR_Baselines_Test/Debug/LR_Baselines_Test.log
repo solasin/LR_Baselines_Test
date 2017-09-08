@@ -1,1 +1,10 @@
-﻿  newton.cpp
+﻿  check.cpp
+  gd.cpp
+  grad.cpp
+  hessi.cpp
+  main.cpp
+  newton.cpp
+  quasi_newton.cpp
+  saga.cpp
+  sgd.cpp
+  svrg.cpp
