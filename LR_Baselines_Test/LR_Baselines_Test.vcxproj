@@ -86,6 +86,7 @@
     <ClCompile Include="gd.cpp" />
     <ClCompile Include="grad.cpp" />
     <ClCompile Include="hessi.cpp" />
+    <ClCompile Include="lant.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="newton.cpp" />
     <ClCompile Include="quasi_newton.cpp" />
@@ -99,6 +100,7 @@
     <ClInclude Include="gd.h" />
     <ClInclude Include="grad.h" />
     <ClInclude Include="hessi.h" />
+    <ClInclude Include="lant.h" />
     <ClInclude Include="newton.h" />
     <ClInclude Include="quasi_newton.h" />
     <ClInclude Include="saga.h" />
