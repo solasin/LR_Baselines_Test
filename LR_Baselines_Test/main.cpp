@@ -19,7 +19,7 @@ int main(){
 	opt_2.find_opt(true);*/
 
 	//---------- SVD Case --------//
-	double** a;
+	/*double** a;
 	a = (double**)malloc(sizeof(double*) * 3);
 	a[0] = (double*)malloc(sizeof(double) * 3 * 4);
 	for (int i = 1; i < 3; i++)
@@ -57,6 +57,29 @@ int main(){
 	printf("Sigma = \n");
 	for (int i = 0; i < 3; i++)
 		printf("%d = %lf\n", i, s[i]);
+	*/
 
+	// ----------------- dgemm Trans Case ---------------//
+	double** a;
+	a = (double**)malloc(sizeof(double*) * 4);
+	a[0] = (double*)malloc(sizeof(double) * 8);
+	for (int i = 1; i < 4; i++)
+		a[i] = a[0] + 2 * i;
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 2; j++)
+			a[i][j] = i * 2 + j;
+
+	double** ans;
+	ans = (double**)malloc(sizeof(double*) * 2);
+	ans[0] = (double*)malloc(sizeof(double) * 2 * 2);
+	ans[1] = ans[0] + 2;
+
+	cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, 2, 2, 4, 1.0, a[0], 2, a[0], 2, 0, ans[0], 2);
+
+	for (int i = 0; i < 2; i++) {
+		for (int j = 0; j < 2; j++)
+			printf("%lf ", ans[i][j]);
+		printf("\n");
+	}
 	return 0;
 }

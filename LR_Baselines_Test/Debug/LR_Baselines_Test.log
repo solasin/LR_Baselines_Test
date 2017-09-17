@@ -1,6 +1,1 @@
-﻿  lant.cpp
-lant.cpp(169): warning #1011: missing return statement at end of non-void function "lant::find_opt"
-    }
-    ^
-  
-  main.cpp
+﻿  main.cpp
