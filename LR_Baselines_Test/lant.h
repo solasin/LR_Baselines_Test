@@ -16,10 +16,9 @@ struct lant {
 	double lambda;
 	int iter_num;
 	int fea_rank;
-	double gau_sigma;
 
 	int init_lant(char* fea_file, char* label_file, double lambda, int iter_num, int opt_rank, double gau_sigma);
-	int init_lant(svrg* opt_pre, int iter_num, int opt_rank, double gau_sigma);
+	int init_lant(svrg* opt_pre, int iter_num, int opt_rank);
 	int find_opt(bool pre_opted);
 	int find_aprx(double** half_hessi, double &tuc_lam);
 	int check_aprx();

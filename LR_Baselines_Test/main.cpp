@@ -9,14 +9,15 @@
 #include"saga.h"
 #include"newton.h"
 #include"quasi_newton.h"
+#include"lant.h"
 svrg opt_1;
-quasi_newton opt_2;
+lant opt_2;
 int main(){
-	/*opt_1.init_svrg("E:\\Conference\\ICML18\\dataset\\post-processing\\minist\\train-images.in", "E:\\Conference\\ICML18\\dataset\\post-processing\\minist\\train-labele.in",1e-4,0.0025,3);
+	opt_1.init_svrg("E:\\Conference\\ICML18\\dataset\\post-processing\\minist\\train-images.in", "E:\\Conference\\ICML18\\dataset\\post-processing\\minist\\train-labele.in",1e-4,0.0025,3);
 	opt_1.find_opt();
-	opt_2.init_quasi_newton(&opt_1, 100);
+	opt_2.init_lant(&opt_1, 100,20);
 	opt_1.relese_svrg();
-	opt_2.find_opt(true);*/
+	opt_2.find_opt(true);
 
 	//---------- SVD Case --------//
 	/*double** a;
@@ -60,7 +61,7 @@ int main(){
 	*/
 
 	// ----------------- dgemm Trans Case ---------------//
-	double** a;
+	/*double** a;
 	a = (double**)malloc(sizeof(double*) * 4);
 	a[0] = (double*)malloc(sizeof(double) * 8);
 	for (int i = 1; i < 4; i++)
@@ -80,6 +81,6 @@ int main(){
 		for (int j = 0; j < 2; j++)
 			printf("%lf ", ans[i][j]);
 		printf("\n");
-	}
+	}*/
 	return 0;
 }
