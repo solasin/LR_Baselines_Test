@@ -13,9 +13,9 @@
 svrg opt_1;
 lant opt_2;
 int main(){
-	opt_1.init_svrg("E:\\Conference\\ICML18\\dataset\\post-processing\\minist\\train-images.in", "E:\\Conference\\ICML18\\dataset\\post-processing\\minist\\train-labele.in",1e-4,0.0025,3);
+	opt_1.init_svrg("E:\\Conference\\ICML18\\dataset\\post-processing\\minist\\train-images.in", "E:\\Conference\\ICML18\\dataset\\post-processing\\minist\\train-labele.in",1e-4,0.025,3);
 	opt_1.find_opt();
-	opt_2.init_lant(&opt_1, 100,20);
+	opt_2.init_lant(&opt_1, 100,200);
 	opt_1.relese_svrg();
 	opt_2.find_opt(true);
 

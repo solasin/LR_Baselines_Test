@@ -34,11 +34,10 @@ int lant::init_lant(char* fea_file, char* label_file, double lambda, int iter_nu
 	this->lambda = lambda;
 	this->iter_num = iter_num;
 	this->fea_rank = opt_rank;
-	this->gau_sigma = gua_sigma;
 	return 0;
 }
 
-int lant::init_lant(svrg* opt_pre, int iter_num, int opt_rank, double gua_sigma) {
+int lant::init_lant(svrg* opt_pre, int iter_num, int opt_rank) {
 	this->exp_num = opt_pre->exp_num;
 	this->fea_num = opt_pre->fea_num;
 	this->cate = opt_pre->cate;
@@ -160,6 +159,8 @@ int lant::find_aprx(double** half_hessi, double &tuc_lam) {
 	LAPACKE_dgesvd(LAPACK_ROW_MAJOR, 'S', 'S', this->fea_rank + OVER_SAMP, this->fea_rank + OVER_SAMP, ker_squ[0], this->fea_rank + OVER_SAMP, tmp_sigma, tmp_u[0], (this->fea_rank + OVER_SAMP), tmp_v[0], (this->fea_rank + OVER_SAMP), tmp_superb);
 	
 	tuc_lam = 1/sqrt(tmp_sigma[this->fea_rank+1]);
+	for (int i = 0; i < this->fea_rank; i++)
+		tmp_sigma[i] = 1.0 / sqrt(tmp_sigma[this->fea_rank + 1]) - 1.0 / sqrt(tmp_sigma[i]);
 
 	tmp_ure = (double**)malloc(sizeof(double*)*(this->fea_rank + OVER_SAMP));
 	tmp_ure[0] = (double*)malloc(sizeof(double)*(this->fea_rank + OVER_SAMP)*this->fea_rank);
@@ -167,8 +168,7 @@ int lant::find_aprx(double** half_hessi, double &tuc_lam) {
 		tmp_ure[i] = tmp_ure[0] + i*this->fea_rank;
 	for (int i = 0; i < this->fea_rank; i++) {
 		cblas_dcopy(this->fea_rank + OVER_SAMP, &tmp_u[0][i], this->fea_rank + OVER_SAMP, &tmp_ure[0][i], this->fea_rank);
-		//need modify 
-		cblas_dscal(this->fea_rank + OVER_SAMP, 1 / sqrt((sqrt(tmp_sigma[i]))), &tmp_ure[0][i], this->fea_rank);
+		cblas_dscal(this->fea_rank + OVER_SAMP, sqrt(tmp_sigma[i]), &tmp_ure[0][i], this->fea_rank);
 	}
 		
 
@@ -227,13 +227,13 @@ int lant::find_opt(bool pre_opted) {
 
 	for (int t = 0; t < this->iter_num; t++) {
 		double loss_now = 0;
-		softmax_loss(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda);
+		loss_now = softmax_loss(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda);
 		printf("EPOCH %d\nLOSS %.8lf %.8lf\n--------------------------------------------------\n", t, loss_now, log(loss_now - OPT_LOSS));
 		softmax_grad(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda, gd_grad);
 		find_aprx(half_hessi, tuc_lam);
 		cblas_dgemm(CblasRowMajor, CblasTrans, CblasNoTrans, this->fea_rank, 1, this->cate*this->fea_num, 1.0, half_hessi[0], this->fea_rank, gd_grad[0], 1, 0, mid_muti, 1);
-		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, this->cate*this->fea_num, 1, this->fea_rank, 1.0, half_hessi[0], this->fea_rank, mid_muti, 1, tuc_lam, gd_grad[0], 1);
-		cblas_daxpy(this->cate*this->fea_num, -1.0, gd_grad[0], 1, this->wi[0], 1);
+		cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, this->cate*this->fea_num, 1, this->fea_rank, -1.0, half_hessi[0], this->fea_rank, mid_muti, 1, tuc_lam, gd_grad[0], 1);
+		cblas_daxpy(this->cate*this->fea_num, -0.25, gd_grad[0], 1, this->wi[0], 1);
 	}
 
 	return 0;

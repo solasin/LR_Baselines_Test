@@ -63,7 +63,7 @@ int svrg::find_opt(){
 	for (int t = 0; t < this->epoch; t++){
 		double loss_now = 0;
 		loss_now = softmax_loss(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda);
-		printf("EPOCH %d\nLOSS %.15lf\n--------------------------------------------------\n", t, loss_now);
+		printf("EPOCH %d\nLOSS %.8lf %.8lf\n--------------------------------------------------\n", t, loss_now, log(loss_now - OPT_LOSS));
 		softmax_grad(this->exp_num, this->cate, this->fea_num, this->wi, this->xi, this->yi, this->lambda, mu_grad);
 		cblas_dcopy(this->cate*this->fea_num, this->wi[0], 1, in_wi[0], 1);
 		for (int i = 0; i < this->exp_num;i++){
